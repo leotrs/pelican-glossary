@@ -4,8 +4,8 @@ and pages, and adds a `definitions` variable visible to all page templates.
 
 """
 
+import bs4
 from pelican import signals
-from bs4 import BeautifulSoup
 
 
 class Definitions():
@@ -29,6 +29,10 @@ def make_def(def_title):
     return ''.join(str(t) for t in def_title.find_next('dd').contents)
 
 
+def make_anchor(def_title):
+    return def_title.text.lower().replace(' ', '-')
+
+
 def set_definitions(generator, metadata):
     generator.context['definitions'] = Definitions.definitions
 
@@ -37,36 +41,38 @@ def get_excludes(pelican):
     Definitions.exclude = pelican.settings.get('GLOSSARY_EXCLUDE', [])
 
 
-def parse_all(content_list):
-    for content in content_list:
-        soup = BeautifulSoup(content.content, 'html.parser')
+def parse_content(content):
+    soup = bs4.BeautifulSoup(content.content, 'html.parser')
 
-        for def_list in soup.find_all('dl'):
-            defns = []
-            for def_title in def_list.find_all('dt'):
-                if def_title.text not in Definitions.exclude:
-                    defns.append(
-                        {'title': make_title(def_title),
-                         'link': make_link(def_title, content.url),
-                         'definition': make_def(def_title),
-                         'source': content})
+    for def_list in soup.find_all('dl'):
+        defns = []
+        for def_title in def_list.find_all('dt'):
+            anchor_name = make_anchor(def_title)
+            anchor_tag = bs4.Tag(name="a", attrs={'name': anchor_name})
+            index = def_list.parent.index(def_list)-1
+            def_list.parent.insert(index, anchor_tag)
 
-            for defn in defns:
-                defn['see_also'] = [d for d in defns if d is not defn]
+            if def_title.text not in Definitions.exclude:
+                defns.append(
+                    {'title': make_title(def_title),
+                     'link': make_link(def_title, content.url),
+                     'definition': make_def(def_title),
+                     'source': content})
 
-            Definitions.definitions += defns
+        for defn in defns:
+            defn['see_also'] = [d for d in defns if d is not defn]
+
+        Definitions.definitions += defns
+
+    content._content = str(soup)
 
 
 def parse_articles(generator):
-    return parse_all(generator.articles)
-
-
-def parse_pages(generator):
-    return parse_all(generator.pages)
+    for article in generator.articles:
+        parse_content(article)
 
 
 def register():
     signals.initialized.connect(get_excludes)
     signals.article_generator_finalized.connect(parse_articles)
-    signals.page_generator_finalized.connect(parse_pages)
     signals.page_generator_context.connect(set_definitions)

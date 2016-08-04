@@ -87,3 +87,6 @@ Next is an example usage of the `definitions` variable.
   default, it's equal to the empty list. `glossary` will add to
   `definitions` all definitions **EXCEPT** those whose title is found
   inside `GLOSSARY_EXCLUDE`.
+
++ THIS PLUGIN NEEDS THE `Content._update_content` METHOD TO NOT BE
+  @memoized.
