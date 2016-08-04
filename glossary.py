@@ -17,14 +17,6 @@ def make_title(def_title):
     return def_title.text
 
 
-def make_link(def_title, url):
-    a_tag = def_title.findChild('a')
-    if a_tag and a_tag['href']:
-        return url + a_tag['href']
-    else:
-        return None
-
-
 def make_def(def_title):
     return ''.join(str(t) for t in def_title.find_next('dd').contents)
 
@@ -55,8 +47,8 @@ def parse_content(content):
             if def_title.text not in Definitions.exclude:
                 defns.append(
                     {'title': make_title(def_title),
-                     'link': make_link(def_title, content.url),
                      'definition': make_def(def_title),
+                     'anchor': anchor_name,
                      'source': content})
 
         for defn in defns:
