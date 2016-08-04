@@ -39,12 +39,12 @@ def parse_content(content):
     for def_list in soup.find_all('dl'):
         defns = []
         for def_title in def_list.find_all('dt'):
-            anchor_name = make_anchor(def_title)
-            anchor_tag = bs4.Tag(name="a", attrs={'name': anchor_name})
-            index = def_list.parent.index(def_list)-1
-            def_list.parent.insert(index, anchor_tag)
-
             if def_title.text not in Definitions.exclude:
+                anchor_name = make_anchor(def_title)
+                anchor_tag = bs4.Tag(name="a", attrs={'name': anchor_name})
+                index = def_list.parent.index(def_list)-1
+                def_list.parent.insert(index, anchor_tag)
+
                 defns.append(
                     {'title': make_title(def_title),
                      'definition': make_def(def_title),
